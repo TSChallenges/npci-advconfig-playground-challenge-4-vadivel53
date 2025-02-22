@@ -4,7 +4,7 @@ metadata:
   name: cassandra
 spec:
   serviceName: cassandra
-  replicas: <INPUT1>
+  replicas: 2
   selector:
     matchLabels:
       app: cassandra
@@ -17,7 +17,7 @@ spec:
         - name: cassandra
           image: cassandra:latest
           ports:
-            - containerPort: <INPUT2>
+            - containerPort: 9042
           env:
             - name: CASSANDRA_SEEDS
               value: "cassandra-0.cassandra.default.svc.cluster.local"
@@ -39,7 +39,7 @@ metadata:
 spec:
   clusterIP: None  # Makes it headless
   selector:
-    app: <INPUT3>
+    app: cassandra
   ports:
     - port: 9042
       name: cql
