@@ -1,0 +1,67 @@
+Part 1: Cassandra Setup on Kubernetes
+Deploy a two-node Cassandra cluster on Kubernetes:
+
+Use the cassandra.yaml manifest file given to you
+Replace the values of <INPUT1>, <INPUT2>, <INPUT3> before applying the manifest.
+Verify the cluster is running and healthy
+
+Check the status of the Kubernetes pods and filter the results using the approriate labels
+*******************************************
+ docker ps
+ k get nodes
+ vi cassandra.yaml
+ k apply -f cassandra.yaml
+ k get pods
+ k get pods -l app=cassandra
+*******************************************
+
+Part 2: Cassandra Cluster Monitoring
+Use nodetool to check the status of the cluster and ensure all nodes are in an UN (Up Normal) state.
+Use nodetool info to gather resource usage metrics (disk space, memory, etc.).
+Connect to one of the Cassandra nodes using cqlsh and ensure that you can execute CQL commands.
+***********************************************
+k exec -it cassandra-0 -- bash
+    1  nodetool status
+    2  nodetool info
+    3  cqlsh
+    4  cqlsh 10.42.0.5 9042
+    5  nodetool status
+    6  cqlsh 10.42.0.6 9042
+
+**********************************************
+
+Part 3: Running CQL Basic Commands
+Create a keyspace named user_data with replication factor 2.
+Create a table users with columns id, name, and email.
+Insert three records for the below users and query them to verify insertion:
+Alice, alice@example.com
+Terence, terence@example.com
+Mike, mike@example.com
+Login to the 2nd node and test if all the table data is accessible
+***************************************************
+  cqlsh 10.42.0.5 9042
+  CREATE KEYSPACE user_data WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 2} AND durable_writes = true;
+  CREATE TABLE user_data.users (id UUID PRIMARY KEY,name TEXT,email TEXT);
+  INSERT INTO user_data.users (id, name, email) VALUES (uuid(), 'Alice', 'alice@example.com');
+  INSERT INTO user_data.users (id, name, email) VALUES (uuid(), 'Terence', 'terence@example.com');
+  INSERT INTO user_data.users (id, name, email) VALUES (uuid(), 'Mike', 'mike@example.com');
+***************************************************
+Part 4: Performance Optimization
+The development team complains that queries on the users table are slow. Complete the following tasks to resolve the issues.
+
+Check the existing caching and the compaction strategies for the users table.
+Implement a caching strategy to set the rows for each partition to 10.
+Searching by email is frequently required. Optimize read performance of such queries by adding an appropriate indexing strategy.
+Use batch write queries to insert 2 new user records into the table:
+Priya, priya@example.com
+Shahid, shahid@example.com
+**************************************************************
+  cqlsh 10.42.0.5 9042
+  ALTER TABLE users WITH caching = {'keys': 'ALL', 'rows_per_partition': '10'};
+  CREATE INDEX ON user_data.users (email);
+  SELECT * FROM user_data.users WHERE email = 'alice@example.com';
+  BEGIN BATCH
+  INSERT INTO user_data.users (id, name, email) VALUES (uuid(), 'Priya', 'priya@example.com');
+  INSERT INTO user_data.users (id, name, email) VALUES (uuid(), 'Shahid', 'shahid@example.com');
+  APPLY BATCH;
+**************************************************************
